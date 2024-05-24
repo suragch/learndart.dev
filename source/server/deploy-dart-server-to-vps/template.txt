@@ -1,0 +1,3 @@
+<div style="text-align: center;">
+    <img src="./img/promo.png" width="100%" alt="Dart on the server" />
+</div>
