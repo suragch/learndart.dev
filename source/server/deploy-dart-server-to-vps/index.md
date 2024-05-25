@@ -664,8 +664,8 @@ server {
         index index.html;
     }
 
-    location /api {
-        proxy_pass http://localhost:8080;
+    location /api/ {
+        proxy_pass http://localhost:8080/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -796,8 +796,8 @@ server {
         index index.html;
     }
 
-    location /api {
-        proxy_pass http://localhost:8080;
+    location /api/ {
+        proxy_pass http://localhost:8080/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -1130,7 +1130,16 @@ You should get see `Hello, World!` on the command line.
 
 Now for the big test. Go to your browser and navigate to
 
-- [https://learndart.dev/api](https://learndart.dev/api)
+- [https://myapp.learndart.dev/api](https://myapp.learndart.dev/api)
 
 You should see the `Hello, World!` message.
 
+<div style="text-align: center;">
+    <img src="./img/helloworld-remote.png" width="100%" alt="Success!" />
+</div>
+
+Congratulations! You've deployed your first Dart server to a VPS.
+
+## Conclusion
+
+As you can see, it's an involved process to deploy a server to a VPS. However, when you do it like this you're in complete control. And after doing it a few times, it gets easier. Bookmark this page, and come back the next time you need to set up a server.
