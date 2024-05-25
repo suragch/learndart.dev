@@ -137,7 +137,11 @@ Much of the process for the remainder of this tutorial I learned from DigitalOce
 - [How To Install and Use Docker on Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04)
 - [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) (Docker docs)
 
-## Step 1: Setup the server
+## Step 1: Ubuntu Server
+
+In this section, you'll go through the process of configuring your new Ubuntu Linux server. That'll involve updating the system and improving on the default security.
+
+### Logging in
 
 Find the IP address and root password that you received in the email from your VPS provider. 
 
@@ -347,9 +351,11 @@ The only password you'll be asked for is your `ssh` key password, if you set one
 
 That completes the initial hardening of your server security. Good work!
 
-## Step 2: Installing Nginx Web Server
+## Step 2: Nginx
 
 [Nginx](https://nginx.org/) is a web server that will take incoming requests and route them to the appropriate location.
+
+### Installing Nginx
 
 We'll have requests coming in for the following primary locations:
 
@@ -543,7 +549,7 @@ And paste in some temporary content:
 </html>
 ```
 
-Save and exit with Ctrl+X.
+Save and exit with **Ctrl+X**.
 
 #### Adding the app specific site
 
@@ -629,14 +635,18 @@ Now visit your site in a browser:
 - [http://learndart.dev](http://learndart.dev/)
 
 <div style="text-align: center;">
-    <img src="./img/learndart.png" width="300" alt="Learn Dart site workingr" />
+    <img src="./img/learndart.png" width="300" alt="Learn Dart site working" />
 </div>
 
 Great, it's working!
 
 #### Configuring the app site
 
-Now repeat the process for your app site. Create the server configuration file:
+Now repeat the process for your app site. 
+
+> **Note**: If you're only using your domain for MyApp, then you can add the `location /api` block below to the server block in the configuration file you just created for `learndart.dev`. You can then skip creating a new configuration file for `myapp.learndart.dev`.
+
+Create the server configuration file:
 
 ```
 sudo nano /etc/nginx/sites-available/myapp.learndart.dev
@@ -665,7 +675,7 @@ server {
 }
 ```
 
-For requests coming in for `myapp.learndart.dev`, you'll serve web content from the `html` folder you created earlier for this site. However, there is also a special location block for `/api` requests. That means any request coming in for `myapp.learndart.dev/api` will be proxied (forwarded) to an internal server (localhost) listening on port 8080. This is where your Dart server will be running in a Docker container.
+For requests coming in for `myapp.learndart.dev`, you'll serve web content from the `html` folder you created earlier. However, there's also a special location block for `/api` requests. That means any request coming in for `myapp.learndart.dev/api` will be proxied (forwarded) to an internal server (localhost) listening on port 8080. This is where your Dart server will be running in a Docker container.
 
 Repeat the other steps for enabling this site:
 
@@ -677,20 +687,39 @@ sudo systemctl restart nginx
 
 Visit your app site in a browser:
 
-- https://myapp.learndart.dev/
-
-![image description](./img/myapp.png)
+- [http://myapp.learndart.dev](http://myapp.learndart.dev)
 
 <div style="text-align: center;">
-    <img src="./img/myapp.png" width="400px" alt="image description" />
-    <div style="font-style: italic; margin-top: 0.5rem;">This is the image label</div>
+    <img src="./img/myapp.png" width="250" alt="MyApp site working" />
 </div>
 
 Looks good.
 
-It appears that Cloudflare is handling the TLS (HTTPS) certificate. Read [this](https://blog.cloudflare.com/introducing-backup-certificates/) for more. But you might not be using Cloudflare, and even if you are, let's get a certificate from Let's Encrypt.
+Next, you'll add a certificate to your site to enable HTTPS encryption.
 
-First install the Certbot client:
+### Enabling HTTPS
+
+TLS (Transport Layer Security) or SSL (Secure Sockets Layer) certificates are used to encrypt the traffic between your browser and the server. They're provided by a certificate authority (CA), which is a trusted third party that issues certificates. This is the requirement for using HTTPS rather than HTTP in your site address. That matters for your MyApp API especially because you don't want user data to appear in plain text to anyone who's sniffing the network traffic.
+
+If you're using Cloudflare, then you already have a certificate for your domain. Kind of. [Cloudflare provides the certificate](https://developers.cloudflare.com/ssl/concepts/) for the traffic between the browser and Cloudflare's servers. But the traffic between Cloudflare and your server remains unencrypted. We're going to go the extra mile and use a certificate from [Let's Encrypt](https://letsencrypt.org/) to make sure the data is encrypted along the entire route.
+
+#### Enabling Full (strict) encryption in Cloudflare
+
+> **Note**: If you're not using Cloudflare, you can skip this step.
+
+You need to tell Cloudflare that you will be using another SSL/TLS certificate for your site. To do that, go to your site in the Cloudflare dashboard. Then go to **SSL/TLS** in the menu and choose **Overview**.  Choose **Full (strict)** from the list of encryption mode options.
+
+<div style="text-align: center;">
+    <img src="./img/ssl.png" width="100%" alt="Choose Full (strict) mode in Cloudflare" />
+</div>
+
+Now, if you visit [[your site](https://learndart.dev)](https://learndart.dev) in a browser, you'll see that your site is down. (You might have to refresh your browser cache.) It'll come back after you create the certificate in the next step.
+
+#### Getting a certificate
+
+Whether you are getting a certificate to encrypt traffic from your server to Cloudflare or using another registrar and encrypting your traffic from your server to the browser, the process of getting a certificate is the same. And thankfully it's pretty easy in Ubuntu 22.04 if you use the [Certbot](https://certbot.eff.org/pages/about) client for Let's Encrypt.
+
+First, install Certbot on your server: 
 
 ```
 sudo snap install core
@@ -716,7 +745,7 @@ Open the files to see the changes that Certbot made:
 sudo nano /etc/nginx/sites-available/learndart.dev
 ```
 
-Here is the modified content:
+Here's the modified content:
 
 ```
 server {
@@ -756,7 +785,7 @@ Also check out the changes to your app site:
 sudo nano /etc/nginx/sites-available/myapp.learndart.dev
 ```
 
-Here is the content:
+Here's the content:
 
 ```
 server {
@@ -794,27 +823,35 @@ server {
 }
 ```
 
-Mostly this is the same, but I had you open this file to note that `/api` proxy is still using HTTP on port 8080, not HTTPS. That's because calls to localhost port 8080 are internal and not exposed to the public internet. Since presumably you are the only one with access to the server, this is probably fine. If your server had more users that should see the traffic coming in and out of your Dart server, you might need to configure HTTPS for the internal requests as well.
+Mostly this is the same, but I had you open this file to note that the `/api` proxy is still using HTTP on port `8080`, not HTTPS. That's because calls to `localhost` port `8080` are internal and not exposed to the public internet. Since presumably you are the only one with login access to the server, this is probably fine. For a larger company with multiple employees that have access to the server, you may need to consider additional security measures.
 
-You can log out of your server now:
+Visit your site ([https://learndart.dev](https://learndart.dev/)) in a browser and it should be working over HTTPS now. Congratulations!
+
+<div style="text-align: center;">
+    <img src="./img/https.png" width="300" alt="HTTPS working" />
+</div>
+
+You can log out of your server for now:
 
 ```
 exit
 ```
 
-In the next step you'll prepare a Dart Docker image on your local machine.
+Next, you'll move on to Docker and Dart.
 
-## Step 3: Run the Dart server
+## Step 3: Docker
 
-For this tutorial, we'll use the default Dart Shelf server that is auto-generated when you create a new Shelf project.
+Before you actually get to Docker, you need to prepare your MyApp API server. While anything that runs in Docker is fine, for this tutorial, you'll use the default Dart Shelf server that is auto-generated when you create a new [Shelf](https://pub.dev/packages/shelf) project.
 
-Assuming you have Dart installed on your local machine, run the following command:
+### Creating a sample Dart server
+
+Assuming you have [Dart](https://dart.dev/get-dart) installed on your local machine, run the following command:
 
 ```
 dart create -t server-shelf my_app_server
 ```
 
-Test that it is working locally by starting the server:
+Test that it's working locally by starting the server:
 
 ```
 cd my_app_server
@@ -823,21 +860,35 @@ dart run bin/server.dart
 
 Open the following address in a browser:
 
-- http://localhost:8080/
+- [http://localhost:8080](http://localhost:8080)
 
 You should see `Hello, World!`:
 
-![Dart server working locally](./img/helloworld-local.png)
+<div style="text-align: center;">
+    <img src="./img/helloworld-local.png" width="300" alt="Dart server working locally" />
+</div>
 
-You can stop the server by pressing Ctrl-C.
+You can stop the server by pressing **Ctrl+C**.
 
-Docker is a program that allows you bundle of the dependencies that your project needs along with the project itself. This allows the project to run in a consistent environment regardless of the machine it is running on. You don't actually have to use Docker. You could install Dart directly on your server and then run the app there just like you did above. However, if you use Docker it's a lot more contained and you don't have to worry about updating the Dart version on the server to match what you used in your dev environment on your local machine.
+### Evaluating alternative deployment options
 
-To start with, you need to install Docker. 
+Now that your server is ready to deploy, there are several options to run a Dart server on a VPS:
 
-Then start Docker.
+- You could install the Dart SDK on the server and run your app in JIT mode just like you do on your local machine during development.
+- You could compile your Dart app to a standalone executable in AOT mode and run that on the server.
+- You could bundle your app in a Docker image and run Docker on the server.
 
-Open the Dockerfile in your my_app_server project:
+There are advantages and disadvantages to each of these options. The Docker option is relatively painless and it's nice to have everything isolated in its own container, so that's the route I'll take in this tutorial.
+
+### Setting up Docker locally
+
+[Docker](https://www.docker.com/) is a program that lets you to bundle all of the dependencies your project needs along with the project itself. This allows the application to run in a consistent environment regardless of the machine it's located on.
+
+To start with, you need to [install Docker](https://www.docker.com/products/docker-desktop/) on your local machine. I'll leave that for you to figure out.
+
+#### Browsing a Dockerfile
+
+Have a look at the `Dockerfile` in your `my_app_server` project:
 
 ```
 # Use latest stable channel SDK.
@@ -863,9 +914,15 @@ EXPOSE 8080
 CMD ["/app/bin/server"]
 ```
 
-The comments in the file tell you what each step is doing. The main thing to note is that the Dockerfile tells Docker how to build the image.
+The comments in the file tell you what each step is doing. The main thing to understand is that the `Dockerfile` tells how to build a Docker image.
 
-From within your `my_app_server` project, run the following command to build the Docker image:
+> **Note**: When learning Docker, you'll see the terms "image" and "container" a lot. Sometimes the difference can be confusing. You can think of an image like a Dart class and the container as an instance of that class. The image is a template for creating containers and the container is what actually runs on your system. [This article](https://circleci.com/blog/docker-image-vs-container/) is pretty good if you want a more in-depth explanation.
+
+#### Building a Docker image
+
+Now that you've installed Docker on your local machine, make sure Docker is running.
+
+Then, from within your `my_app_server` project, run the following terminal command to build the Docker image:
 
 ```
 docker build . -t myapp:v1.0.0
@@ -874,31 +931,72 @@ docker build . -t myapp:v1.0.0
 Here are a few notes:
 
 - The default build platform is `linux/amd64`, which is what your Ubuntu server needs.
-- `myapp` is the image name and `v1.0.0` is the tag.
+- `-t` defines the tag `myapp:v1.0.0` for the image.
+- `myapp` is the image name and `v1.0.0` is the version.
+- The image for your app is built on top of the official Dart Docker image. That means running the `build` command will download the Docker image and any other dependencies needed to build your app.
 
-Test it to make sure it is working locally:
+List the existing Docker images:
+
+```
+docker images
+```
+
+You should see something similar to the following:
+
+```
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+myapp        v1.0.0    ac4498012b1b   5 minutes ago   10.1MB
+```
+
+#### Creating and starting a Docker container
+
+Test your image to make sure it's working locally:
 
 ```
 docker run -it -p 8080:8080 myapp:v1.0.0
 ```
 
-You should see `Hello, World!` as before.
+Here are a few notes of what that does:
 
-To stop the running container, open another terminal and run:
+- The `run` command is a combination of `create` and `start`. It creates a Docker container and runs it.
+- `-it` tells Docker to run the container in interactive mode.
+- `-p` tells Docker to forward port `8080` on the container to port `8080` on your local machine.
+- `myapp:v1.0.0` is the image to run.
+
+> **Note**: My local machine is an Intel chip Mac and that's all I've tested this on. It runs the default image we created earlier. If you're running Windows or an Apple chip Mac, I'm not sure if you'll need to specify a different platform for the image build step. If you can let me know whether it's also working on these platforms, I'd appreciate it.
+
+Open the following address in a browser:
+
+- [http://localhost:8080](http://localhost:8080)
+
+You should see `Hello, World!` again as you did when you ran your program directly with Dart.
+
+#### Stopping a Docker container
+
+Pressing **Ctrl+C** doesn't work to stop a running Docker container. To stop it, open another terminal and run:
 
 ```
 docker ps
 ```
 
-This will tell you the container ID. Then run the following command, replacing the container id with your own:
+This will tell you the container ID:
 
 ```
-docker stop 8ad89d02ae43
+CONTAINER ID   IMAGE          COMMAND             CREATED         STATUS         PORTS                    NAMES
+e3da89cdf8ef   myapp:v1.0.0   "/app/bin/server"   5 minutes ago   Up 5 minutes   0.0.0.0:8080->8080/tcp   serene_morse
 ```
 
-Now it's time to copy the docker image to the server.
+Then run the following command, replacing the container ID with your own:
 
-Save your Docker image:
+```
+docker stop e3da89cdf8ef
+```
+
+### Moving a Docker image to the server
+
+Now it's time to copy your Docker image to the server.
+
+First, save your image as a `tar` file:
 
 ```
 docker save -o myapp-v1.0.0.tar myapp:v1.0.0
@@ -922,9 +1020,9 @@ Confirm that the image is there:
 ls
 ```
 
-Next you need to install Docker on the server.
+### Setting up Docker on the server
 
-The following directions come from the [Docker docs](https://docs.docker.com/engine/install/ubuntu/). You can also check out the [DigitalOcean guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04) for help.
+Next you need to install Docker on the server. The following directions come from the [Docker docs](https://docs.docker.com/engine/install/ubuntu/). You can also check out the [DigitalOcean guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04) for help.
 
 First uninstall any old versions of Docker:
 
@@ -932,7 +1030,7 @@ First uninstall any old versions of Docker:
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt remove $pkg; done
 ```
 
-Then run each of the following commands to add Docker's official GPG key:
+Then run each of the following commands to add Docker's official [GPG](https://en.wikipedia.org/wiki/GNU_Privacy_Guard) key:
 
 ```
 sudo apt update
@@ -951,7 +1049,7 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
 
-Finally, update the packages:
+Update the packages again:
 
 ```
 sudo apt update
@@ -971,11 +1069,7 @@ sudo docker run hello-world
 
 You should see a `Hello from Docker!` message among other output.
 
-Let's add your user to the docker group so that you don't always have to prepend sudo.
-
-```
-
-```
+### Running your Docker image on the server
 
 Now you can load the Docker image you saved earlier:
 
@@ -994,9 +1088,9 @@ sudo docker images
 You should see output similar to the following:
 
 ```
-REPOSITORY    TAG       IMAGE ID       CREATED             SIZE
-myapp         v1.0.0    473ece66d914   About an hour ago   10.1MB
-hello-world   latest    d2c94e258dcb   12 months ago       13.3kB
+REPOSITORY    TAG       IMAGE ID       CREATED          SIZE
+myapp         v1.0.0    ac4498012b1b   51 minutes ago   10.1MB
+hello-world   latest    d2c94e258dcb   12 months ago    13.3kB
 ```
 
 Now start running your container:
@@ -1005,11 +1099,11 @@ Now start running your container:
 sudo docker run -d --restart unless-stopped -p 8080:8080 myapp:v1.0.0
 ```
 
-Here is what this does:
+This is similar to the `run` command when you ran the Docker container on your local machine. Here are the new parts:
 
 - `-d` runs the container in the background.
 - `--restart unless-stopped` restarts the container when the server restarts. However, if you manually stop the container, it won't restart.
-- `-p 8080:8080` maps the server's port 8080 to the container's port 8080. Port 8080 is where Nginx is forwarding `/api` requests to.
+- `-p 8080:8080` again maps the server's port `8080` to the container's port `8080`. If you recall, port `8080` is where Nginx is forwarding `/api` requests to.
 
 Check that the container is running:
 
@@ -1020,12 +1114,23 @@ sudo docker ps
 You should see something like the following:
 
 ```
-CONTAINER ID   IMAGE          COMMAND             CREATED          STATUS          PORTS                    NAMES
-f5b69299fe1d   myapp:v1.0.0   "/app/bin/server"   14 seconds ago   Up 13 seconds   0.0.0.0:8080->8080/tcp   friendly_einstein
+CONTAINER ID   IMAGE          COMMAND             CREATED         STATUS         PORTS                    NAMES
+a1af7688de9a   myapp:v1.0.0   "/app/bin/server"   2 minutes ago   Up 2 minutes   0.0.0.0:8080->8080/tcp   relaxed_hermann
 ```
+
+### Testing it out
+
+First make sure that Docker is working internally on your server:
+
+```
+curl localhost:8080
+```
+
+You should get see `Hello, World!` on the command line.
 
 Now for the big test. Go to your browser and navigate to
 
-- `https://learndart.dev/api`. 
+- [https://learndart.dev/api](https://learndart.dev/api)
 
 You should see the `Hello, World!` message.
+
