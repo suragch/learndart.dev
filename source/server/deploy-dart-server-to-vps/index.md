@@ -1,6 +1,8 @@
 ---
-title: Deploying a Dart server to a VPS
+title: Deploying a Dart server to a VPS
 description: A step-by-step tutorial on how to deploy a Dart backend to a Virtual Private Server.
+feature_image: https://learndart.dev/server/deploy-dart-server-to-vps/img/feature.png
+canonical_url: https://learndart.dev/server/deploy-dart-server-to-vps
 layout: layouts/articles.jinja
 ---
 # Deploying a Dart server to a VPS
@@ -8,14 +10,14 @@ layout: layouts/articles.jinja
 _A step-by-step tutorial_
 
 <div style="text-align: center;">
-    <img src="./img/promo.png" width="100%" alt="Dart on the server" />
+    <img src="./img/feature.png" width="100%" alt="Dart on the server" />
 </div>
 
 _Published May 2024_
 
 ## Introduction
 
-I've always been a fan of taking control of your own backend infrastructure. While there are many Cloud based solutions like Firebase and Supabase, the pricing is often unclear. They may start free for a few small projects, but then they get expensive. I suppose if your app is making a lot of money or you have a lot of investment capital, then it's fine, but that hasn't been my situation in the past. The cheapest option I've found with a clear pricing structure is to run your own virtual private server (VPS).
+I've always been a fan of taking control of your own backend infrastructure. While there are many Cloud-based solutions like Firebase and Supabase, the pricing is often unclear. They may start free for a few small projects, but then they get expensive. I suppose if your app is making a lot of money or you have a lot of investment capital, then it's fine, but that hasn't been my situation in the past. The cheapest option I've found with a clear pricing structure is to run your own virtual private server (VPS).
 
 Of course, going the cheap route means you have to do a lot more work. But that work is also a good learning experience. I've set up my own servers quite a few times over the years, both for hosting web pages and for running backend Dart API servers for Flutter apps. In this article, I'll walk you through the steps to do that yourself.
 
@@ -107,7 +109,7 @@ You can look up the IP address or DNS name with the following tools:
 - [DNS lookup](https://mxtoolbox.com/DNSLookup.aspx)
 - [Reverse IP lookup](https://mxtoolbox.com/ReverseLookup.aspx)
 
-Neither are very helpful at this point, though, because you haven't set up the web server yet. Even if you lookup [learndart.dev](https://mxtoolbox.com/SuperTool.aspx?action=https%3a%2f%2flearndart.dev%2f&run=toolpage), which should be working by the time you read this tutorial, it will show a different IP address than the one I registered on Cloudflare. That's because Cloudflare masks it for security and performance reasons. (Please don't hack me now.)
+Neither is very helpful at this point, though, because you haven't set up the web server yet. Even if you look up [learndart.dev](https://mxtoolbox.com/SuperTool.aspx?action=https%3a%2f%2flearndart.dev%2f&run=toolpage), which should be working by the time you read this tutorial, it will show a different IP address than the one I registered on Cloudflare. That's because Cloudflare masks it for security and performance reasons. (Please don't hack me now.)
 
 If you try to visit your new domain in a browser now, Cloudflare will tell you the server is down. You'll fix that soon.
 
@@ -189,9 +191,9 @@ apt upgrade
 
 This may take a while. Accept the defaults when prompted.
 
-If you get a message about a newer kernal being available, press the **spacebar** to select `<Ok>`.
+If you get a message about a newer kernel being available, press the **spacebar** to select `<Ok>`.
 
-![Pending kernal upgrade](./img/kernal.png)
+![Pending kernel upgrade](./img/kernel.png)
 
 If you get a message about which services to restart, you can accept the defaults. Press **tab** to highlight `<Ok>` and then **spacebar** to confirm.
 
@@ -305,7 +307,7 @@ Next, copy your public key to your server using `ssh-copy-id`. (If you don't hav
 ssh-copy-id me@107.175.2.52
 ```
 
-Log into you server again as `me`:
+Log into your server again as `me`:
 
 ```
 ssh me@107.175.2.52
@@ -427,7 +429,7 @@ You should see a basic web page from Nginx:
 
 The HTML for that page is stored in the `/var/www/html` folder.
 
-> **Note**: If you have a .dev site and you know that .dev is only visible in a browser if you've set up an SSL certificate, you might be wondering why you can see it. The reason is that Cloudflare provides SSL certificates for all cites that they register. Read more about that [here](https://developers.cloudflare.com/ssl/concepts/). You'll set up your own SSL certificate later in the tutorial, so if you didn't go with Cloudflare, that's fine.
+> **Note**: If you have a .dev site and you know that .dev is only visible in a browser if you've set up an SSL certificate, you might be wondering why you can see it. The reason is that Cloudflare provides SSL certificates for all sites that they register. Read more about that [here](https://developers.cloudflare.com/ssl/concepts/). You'll set up your own SSL certificate later in the tutorial, so if you didn't go with Cloudflare, that's fine.
 
 ### Hiding the version number
 
@@ -437,7 +439,7 @@ If you go to a page that doesn't exist, you'll see the version number of Nginx. 
     <img src="./img/version.png" width="200" alt="Nginx version showing" />
 </div>
 
-You can make hackers work a little harder by hiding the version number. That way if there's a known vulnerability in some version and you haven't updated Nginx yet, at least you're not advertizing it.
+You can make hackers work a little harder by hiding the version number. That way if there's a known vulnerability in some version and you haven't updated Nginx yet, at least you're not advertising it.
 
 Open the main configuration file for Nginx:
 
@@ -497,12 +499,12 @@ That config file is still in the `/etc/nginx/sites-available` folder. You haven'
 
 ### Creating new sites
 
-We have two different web sites to create:
+We have two different websites to create:
 
 1. `learndart.dev`
 2. `myapp.learndart.dev`
 
-The first one is our generic site and the second one is our app specific site. 
+The first one is our generic site and the second one is our app-specific site. 
 
 > **Note**: If you already have a working top-level domain that is served somewhere else, then just follow the directions for `myapp.learndart.dev` below. Or, if you're domain is solely for MyApp, then follow the directions for `learndart.dev`.
 
@@ -551,7 +553,7 @@ And paste in some temporary content:
 
 Save and exit with **Ctrl+X**.
 
-#### Adding the app specific site
+#### Adding the app-specific site
 
 Repeat what you did above, this time for your app site:
 
@@ -1126,7 +1128,7 @@ First make sure that Docker is working internally on your server:
 curl localhost:8080
 ```
 
-You should get see `Hello, World!` on the command line.
+You should see `Hello, World!` on the command line.
 
 Now for the big test. Go to your browser and navigate to
 
@@ -1135,7 +1137,7 @@ Now for the big test. Go to your browser and navigate to
 You should see the `Hello, World!` message.
 
 <div style="text-align: center;">
-    <img src="./img/helloworld-remote.png" width="100%" alt="Success!" />
+    <img src="./img/helloworld-remote.png" width="300" alt="Success!" />
 </div>
 
 Congratulations! You've deployed your first Dart server to a VPS.
@@ -1143,3 +1145,14 @@ Congratulations! You've deployed your first Dart server to a VPS.
 ## Conclusion
 
 As you can see, it's an involved process to deploy a server to a VPS. However, when you do it like this you're in complete control. And after doing it a few times, it gets easier. Bookmark this page, and come back the next time you need to set up a server.
+
+If you have any comments, discuss them on the [Reddit post for this article](https://www.reddit.com/r/FlutterSpaces/comments/1d0du1y/deploying_a_dart_server_to_a_vps/), or you can reach me on [X @Suragch1](https://twitter.com/Suragch1).
+
+P.S. I'm using the following commands to upload my [Stack Shock](https://staticshock.io/) site (including this page) to the server:
+
+```
+shock build
+rsync -avz --delete build/ me@107.175.2.52:/var/www/learndart.dev/html/
+```
+
+You can ask your favorite LLM about what that command does.
