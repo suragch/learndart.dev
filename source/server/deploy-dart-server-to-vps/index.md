@@ -679,7 +679,7 @@ server {
 
 For requests coming in for `myapp.learndart.dev`, you'll serve web content from the `html` folder you created earlier. However, there's also a special location block for `/api/` requests. That means any request coming in for `myapp.learndart.dev/api` will be proxied (forwarded) to an internal server (localhost) listening on port 8080. This is where your Dart server will be running in a Docker container.
 
-> **Note**: If you use `location /api/`, the `/api` part will be removed from the proxyed URL. For example, `https://learndart.dev/api/hello` will be proxied to `localhost:8080/hello`. However, if you use `location /api` (without the trailing `/`), the `/api` part will remain. For example, `https://learndart.dev/api/hello` will be proxied to `localhost:8080/api/hello`.
+> **Note**: If you use `location /api/`, the `/api` part will be removed from the proxyed URL. For example, `https://learndart.dev/api/hello` will be proxied to `localhost:8080/hello`. You also need to have the `/` at the end of `http://localhost:8080/`. However, if you use `location /api` (without the trailing `/`), the `/api` part will remain. For example, `https://learndart.dev/api/hello` will be proxied to `localhost:8080/api/hello`.
 
 Repeat the other steps for enabling this site:
 
@@ -1143,6 +1143,23 @@ You should see the `Hello, World!` message.
 </div>
 
 Congratulations! You've deployed your first Dart server to a VPS.
+
+## Troubleshooting
+
+It can be helpful to check the logs to see what is happening:
+
+This is for Docker:
+
+```
+docker ps
+sudo docker logs <container id>
+```
+
+And you can use this one for Nginx:
+
+```
+sudo tail -f /var/log/nginx/access.log
+```
 
 ## Conclusion
 
