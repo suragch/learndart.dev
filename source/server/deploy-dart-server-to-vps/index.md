@@ -307,6 +307,13 @@ Next, copy your public key to your server using `ssh-copy-id`. (If you don't hav
 ssh-copy-id me@107.175.2.52
 ```
 
+> **Note**: You can also use the following commands to specify the specific key to use if you have more than one on your system:
+> 
+> ```
+> ls ~/.ssh
+> ssh-copy-id -i ~/.ssh/id_rsa.pub me@107.175.2.52
+> ```
+
 Log into your server again as `me`:
 
 ```
